@@ -87,3 +87,21 @@ INSERT INTO client
 VALUES ('0001', 'Іван','Сидоренко','+380665437243','ivan@gmail.com','2021-10-01','GOLD'),
        ('0002', 'Петро','Коваль','+380675487449','kovpetro@gmail.com','2021-10-09','NAN');
 SELECT * FROM client
+
+Alter Table Orders
+Add Check(order_finish>order_date)
+
+SELECT * FROM Orders
+
+INSERT INTO card_info
+VALUES ('GOLD', 10.00),
+       ('SILVER', 5.00),
+	   ('PLATINUM',15.00),
+	   ('NAN',0.00);
+SELECT * FROM card_info
+
+Select * From client
+Where left(tel_number,4)="+380";
+
+Alter Table client
+Add Check(left(tel_number,4)="+380");
