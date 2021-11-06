@@ -424,3 +424,189 @@ Alter Table client
 Add Check(left(tel_number,4)='+380');
 
 
+--1
+SELECT sup_name FROM supplier_info
+WHERE  deliv_day = 'по вівторках';
+
+--2
+SELECT cli_name, tel_number,email FROM client
+WHERE birthday = CURRENT_DATE;
+
+--3
+SELECT cli_name, tel_number,email FROM client
+WHERE EXTRACT(MONTH FROM birthday)= EXTRACT(MONTH FROM CURRENT_DATE)
+AND EXTRACT(DAY FROM birthday)= EXTRACT(DAY FROM CURRENT_DATE);
+
+--4
+SELECT emp_name,surname FROM employees
+WHERE EXTRACT(MONTH FROM date_startwork)= EXTRACT(MONTH FROM CURRENT_DATE)
+AND EXTRACT(DAY FROM date_startwork)= EXTRACT(DAY FROM CURRENT_DATE);
+
+--5
+SELECT * FROM post_info
+WHERE city = 'Львів';
+
+--6
+SELECT * FROM client
+WHERE bonus_card ='GOLD' OR bonus_card = 'PLATINUM';
+
+--7
+SELECT * FROM product
+WHERE prod_price < '$200.00' AND count_stock>20;
+
+--8
+SELECT cli_name, tel_number,email FROM client
+WHERE cli_name IN ('Ігор','Олег');
+
+--9
+SELECT prod_name, prod_price, count_stock FROM product
+WHERE prod_name LIKE '%Війн%' or prod_name Like '%війн%';
+
+--10
+SELECT * FROM client
+WHERE tel_number LIKE '+380[6,9][7,8]%' OR tel_number LIKE '+38096%';
+
+--11
+SELECT group_id,SUM(count_stock) as sum_book FROM product
+GROUP BY group_id
+ORDER BY sum_book;
+
+--12
+SELECT order_id,SUM(product_count) as sum_book FROM orders_prod
+GROUP BY order_id
+ORDER BY sum_book;
+
+--13
+SELECT client_id, COUNT(order_id) FROM Orders
+GROUP BY client_id;
+
+--14
+SELECT employee_id,
+	AVG(DATE_PART('day', order_finish::timestamp - order_date::timestamp)) as mean_day
+FROM Orders
+GROUP BY employee_id
+ORDER BY mean_day DESC;
+
+--15
+SELECT city, COUNT(post_id) FROM post_info
+GROUP BY city
+ORDER BY COUNT(post_id) DESC;
+
+--16
+SELECT * FROM product
+WHERE count_stock BETWEEN 20 AND 30 AND group_id='0004'
+ORDER BY prod_price;
+
+--17
+SELECT cli_name, tel_number,email, bonus_card FROM client
+WHERE DATE_PART('year', AGE(CURRENT_DATE,birthday))
+BETWEEN 18 And 23;
+
+--18
+SELECT product_id FROM orders_prod
+GROUP BY product_id
+HAVING SUM(product_count)>5
+ORDER BY SUM(product_count) DESC
+LIMIT 3;
+
+--19
+SELECT DISTINCT city FROM post_info;
+
+--20
+SELECT bonus_card, COUNT(*) FROM client
+GROUP BY bonus_card;
+
+--21
+SELECT prod_name,
+(SELECT sup_name
+FROM supplier_info AS s
+WHERE p.supplier_id=s.supplier_id)
+FROM product AS p;
+
+--22
+SELECT p.prod_name, s.sup_name
+FROM product AS p
+FULL OUTER JOIN supplier_info AS s
+ON s.supplier_id=p.supplier_id;
+
+--23
+SELECT c.client_id, c.email, b.discount 
+FROM client AS c
+LEFT JOIN card_info AS b 
+ON c.bonus_card=b.card_name
+WHERE b.discount>0
+ORDER BY b.discount DESC;
+
+--24
+SELECT e.emp_name, p.position,p.salary
+FROM employees AS e 
+INNER JOIN position_info AS p
+ON e.position=p.position;
+
+--25
+SELECT p.product_id,p.prod_name,p.count_stock
+FROM product AS p
+LEFT JOIN group_info AS g
+ON g.group_id=p.group_id
+WHERE g.stock_place='А2';
+
+--26
+SELECT e.employee_id, e.emp_name,o.order_id
+FROM employees AS e 
+RIGHT JOIN Orders AS o
+ON e.employee_id=o.employee_id
+WHERE o.order_status='В обробці';
+
+--27
+SELECT (
+	SELECT e.emp_name
+	FROM employees AS e 
+	RIGHT JOIN Orders AS o
+	ON e.employee_id=o.employee_id
+	WHERE o.order_id=op.order_id
+),o.order_id, op.product_id,op.product_count
+FROM orders_prod AS op
+LEFT JOIN Orders AS o
+ON o.order_id=op.order_id
+WHERE o.order_status='В обробці';
+
+--28
+SELECT  e.emp_name,o.order_id, op.product_id,op.product_count
+FROM employees AS e 
+RIGHT JOIN Orders AS o
+ON e.employee_id=o.employee_id
+INNER JOIN orders_prod AS op 
+ON o.order_id=op.order_id
+WHERE o.order_status='В обробці';
+
+--27 and 28 work the same
+
+--29
+SELECT c.client_id,c.cli_name, 
+CASE 
+	WHEN COUNT(o.order_id)<=1 THEN 'Випадковий клієнт'
+	WHEN (COUNT(o.order_id)>1 )
+		AND (COUNT(o.order_id)<=3 )THEN 'Постійний клієнт'
+	WHEN COUNT(o.order_id)>3 THEN 'Гуртовик' 
+	ELSE NULL
+END AS indep_year_group
+FROM client AS c 
+RIGHT JOIN Orders AS o 
+ON c.client_id=o.client_id
+GROUP BY c.client_id;
+
+--30
+SELECT emp_name,position,
+CASE 
+	WHEN DATE_PART('year', AGE(CURRENT_DATE,date_startwork))<=1 THEN 5.0
+	WHEN DATE_PART('year', AGE(CURRENT_DATE,date_startwork))>1 
+	AND DATE_PART('year', AGE(CURRENT_DATE,date_startwork))<=2 THEN 10.0
+	WHEN DATE_PART('year', AGE(CURRENT_DATE,date_startwork))>2 THEN 15.0
+	ELSE NULL
+END AS bonus
+FROM employees
+ORDER BY bonus DESC;
+
+
+
+
