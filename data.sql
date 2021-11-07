@@ -424,3 +424,119 @@ Alter Table client
 Add Check(left(tel_number,4)='+380');
 
 
+
+
+
+SELECT cli_name, surname, email FROM client
+WHERE bonus_card = 'PLATINUM';
+
+
+SELECT * FROM client
+WHERE surname LIKE '%енко';
+
+
+SELECT emp_name, surname, position FROM employees
+WHERE position IN ('Директор', 'Бухгалтер');
+
+
+SELECT prod_name, prod_price FROM product
+WHERE count_stock BETWEEN 20 AND 30;
+
+
+SELECT prod_name, prod_price
+FROM supplier_info LEFT JOIN product
+ON supplier_info.supplier_id=product.supplier_id
+WHERE deliv_day = 'по четвергах';
+
+
+SELECT * FROM post_info
+WHERE post_name = 'Нова Пошта' OR post_name = 'Міст Експрес';
+
+
+SELECT emp_name, surname FROM employees
+WHERE surname LIKE '%а%';
+
+
+SELECT prod_price, prod_name FROM product
+GROUP BY prod_price, prod_name
+ORDER BY prod_price DESC;
+
+
+UPDATE client
+SET surname = 'Іванова'
+WHERE surname = 'Сергійчук';
+SELECT cli_name, surname, tel_number FROM client
+WHERE surname = 'Іванова';
+
+
+SELECT * FROM client
+Where right(tel_number,2) = '23';
+
+
+SELECT * FROM post_info
+WHERE city = 'Львів' OR city = 'Одеса';
+
+
+SELECT cli_name, surname FROM client
+ORDER BY cli_name;
+
+
+SELECT min(prod_price) AS Min_price
+FROM product;
+
+
+SELECT surname FROM employees
+GROUP BY surname
+HAVING surname LIKE '%о%'
+ORDER BY surname DESC;
+	
+
+SELECT order_id, order_status
+FROM client LEFT JOIN orders
+ON client.client_id=orders.client_id
+WHERE cli_name = 'Анна';
+
+
+SELECT p.prod_name, s.sup_name
+FROM product AS p
+FULL OUTER JOIN supplier_info AS s
+ON s.supplier_id=p.supplier_id;
+
+
+SELECT e.emp_name, e.surname, o.order_id
+FROM employees AS e
+RIGHT JOIN orders AS o
+ON e.employee_id=o.employee_id
+WHERE o.order_status = 'В обробці';
+
+
+SELECT DISTINCT post_name FROM post_info;
+
+
+SELECT post_name, COUNT(*) 
+FROM post_info LEFT JOIN orders
+ON post_info.post_id=orders.post_id
+GROUP BY post_name;
+
+
+SELECT e.emp_name, p.descriptions
+FROM employees AS e
+LEFT JOIN position_info AS p
+ON e.position=p.position
+WHERE DATE_PART ('year', AGE(CURRENT_DATE, e.date_startwork)) > 1;
+
+
+SELECT cli_name, surname, tel_number FROM client
+WHERE exists
+	(SELECT * FROM orders
+	WHERE orders.client_id=client.client_id
+		AND orders.order_status = 'Доставляється');
+
+
+SELECT product_id, product_count,
+CASE
+	WHEN product_count <=2 THEN 'Подарунок - наліпка'
+	WHEN product_count > 2 AND product_count <= 5 THEN 'Безкоштовна доставка'
+ELSE 'Знижка на наступне замовлення -30%'
+END pliushka
+FROM orders_prod;
