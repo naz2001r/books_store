@@ -241,6 +241,7 @@ VALUES ('0001', 'Валентина', 'Сергійчук', '+380974341423', 'va
 SELECT * FROM client;
 
 
+
 INSERT INTO Orders
 VALUES ('0001', '0019', '0001', '2301', 'НОВЕ', '2021-10-15', '2021-10-18'),
        ('0002', '0001', '0015', '2303', 'Успішно', '2021-09-25', '2021-09-28'),
@@ -467,8 +468,10 @@ SELECT * FROM client
 WHERE tel_number LIKE '+380[6,9][7,8]%' OR tel_number LIKE '+38096%';
 
 --11
-SELECT group_id,SUM(count_stock) as sum_book FROM product
-GROUP BY group_id
+SELECT g.group_name,SUM(p.count_stock) as sum_book FROM product as p
+LEFT JOIN group_info AS g
+ON p.group_id=g.group_id
+GROUP BY g.group_name
 ORDER BY sum_book;
 
 --12
@@ -608,5 +611,92 @@ FROM employees
 ORDER BY bonus DESC;
 
 
+Select p.prod_name, SUM(op.product_count)
+From orders_prod as op
+Left JOIN product as p 
+ON op.product_id = p.product_id
+GROUP BY p.prod_name
+ORDER BY SUM(op.product_count) DESC
+LIMIT 1;
 
 
+--function & procedure & trigger
+
+--function
+CREATE OR REPLACE FUNCTION GetActualOrders()  
+RETURNS table (
+	emp_name Varchar,
+	order_id Varchar,
+	product_id Varchar,
+	product_count Integer
+)
+LANGUAGE plpgsql   
+AS   
+$$  
+BEGIN 
+	return query
+    SELECT  e.emp_name,o.order_id, op.product_id,op.product_count
+	FROM employees AS e 
+	RIGHT JOIN Orders AS o
+	ON e.employee_id=o.employee_id
+	INNER JOIN orders_prod AS op 
+	ON o.order_id=op.order_id
+	WHERE o.order_status='В обробці';
+END;
+$$
+
+Select * FROM GetActualOrders() 
+
+--trigger
+CREATE OR REPLACE FUNCTION person()
+    RETURNS TRIGGER
+    SET SCHEMA 'public'
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+    IF LENGTH(NEW.email) = 0 THEN
+        RAISE EXCEPTION 'Email must not be empty.';
+    END IF;
+ 
+    IF POSITION(' ' IN NEW.email) > 0 THEN
+        RAISE EXCEPTION 'Email must not include white space.';
+    END IF;
+ 
+    --INSERT INTO client (client_id, cli_name,surname,tel_number,
+	--					email,birthday,bonus_card) 
+    --    VALUES (NEW.client_id, NEW.cli_name,NEW.surname,NEW.tel_number,
+	--					NEW.email,NEW.birthday,NEW.bonus_card) ;
+ 
+    RETURN NEW;
+    END;
+    $$;
+
+CREATE TRIGGER new_person1 
+    BEFORE INSERT OR UPDATE ON client
+    FOR EACH ROW EXECUTE PROCEDURE person();
+
+INSERT INTO client
+VALUES ('0031', 'Олег', 'Сергійчук', '+380974341423', 'nazar', '2000-03-03', 'SILVER');
+
+Select * From client;
+
+--procedure
+create or replace procedure newpricecount(
+   id Varchar(4),
+   price money, 
+   countt Integer
+)
+language plpgsql    
+as $$
+begin
+    update product 
+    set prod_price =  price,
+		count_stock = countt
+    where product_id = id;
+    commit;
+end;$$
+
+Call newpricecount('0001','$130',14);
+
+SELECT * FROM product
+WHERE product_id ='0001';
